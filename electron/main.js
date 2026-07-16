@@ -1,5 +1,5 @@
 const path = require('path')
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron')
 
 let win = null
 let db = null
@@ -12,6 +12,7 @@ function notifyDataChanged(entity, source) {
 }
 
 function createWindow() {
+  Menu.setApplicationMenu(null)
   win = new BrowserWindow({
     width: 1280,
     height: 800,
