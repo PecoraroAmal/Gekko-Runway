@@ -1,0 +1,180 @@
+MASTER FILE — PROGETTO "GEKKO-RUNWAY"
+=====================================================
+App di finanza personale locale (Electron + React + SQLite) con bot Telegram per l'inserimento dati da telefono.
+Questo file descrive l'architettura, le decisioni prese e lo stato reale del progetto.
+Va tenuto aggiornato man mano che l'app evolve, così da poter essere dato in pasto a Claude Code come contesto di partenza in qualunque momento.
+
+STATO ATTUALE
+-------------
+Il progetto è completo e funzionante, non più un semplice scaffold.
+Tutte le funzionalità descritte in questo file sono implementate e testate: build, dev server, database, bot Telegram, backup/reset, packaging Linux.
+
+
+1) OBIETTIVO
+------------
+App desktop 100% locale (nessun backend cloud) per gestire:
+- conti bancari multipli, con trasferimenti tra conti
+- entrate/uscite con tag, note, roundup e saveback
+- una heatmap annuale stile GitHub (verde/rosso/giallo) delle attività, con dettaglio dei movimenti al click su un giorno
+- un portafoglio investimenti (azioni, obbligazioni, crypto, ETF, altro) con calcolo automatico di plusvalenza netta dopo tasse e liquidazione in blocco
+- spese ricorrenti e proiezione del saldo futuro
+- un bot Telegram locale (attivo solo mentre l'app è aperta) che permette di inserire entrate/uscite/trasferimenti/investimenti da telefono tramite messaggi-schema
+- export/import del database per backup e ripristino manuale
+
+
+2) STATO DELLE FUNZIONALITÀ
+--------------------------------------------------------------
+STACK
+- Frontend: Electron + React (via Vite)
+- Storage: SQLite locale (better-sqlite3), non JSON
+- App funziona offline al 100%, tranne il bot Telegram che per sua natura richiede internet per parlare con i server Telegram
+
+DESIGN
+- Stile minimal bianco/nero + colori pastello, ispirato a Notion e Trade Republic
+- Sia light mode che dark mode, toggle in sidebar, tema salvato nella tabella settings (non in localStorage)
+- Icona app in build/icon.png, usata sia dalla finestra Electron in sviluppo sia dai pacchetti electron-builder
+
+CONTI
+- Valuta unica: EUR
+- Ogni conto ha nome, saldo iniziale, colore identificativo, roundup attivabile, saveback attivabile con percentuale configurabile
+- Il saldo corrente è calcolato automaticamente: saldo_iniziale + entrate - uscite - trasferimenti_in_uscita + trasferimenti_in_entrata
+- Roundup e saveback NON entrano in questo calcolo: confluiscono in un "salvadanaio" separato
+- I conti possono essere chiusi (campo active): restano in sola lettura, con storico e statistiche visibili, ma non selezionabili per nuovi movimenti
+- Eliminare un conto elimina anche tutte le transazioni e gli investimenti collegati (cascade)
+- Grafico dell'andamento del saldo nel tempo per singolo conto, in Conti (recharts LineChart)
+
+ENTRATE/USCITE/TRASFERIMENTI
+- I tag sono categorie predefinite ma personalizzabili dalle Impostazioni (l'utente aggiunge/rimuove tag per tipo entrata/uscita)
+- Una transazione ha UN SOLO tag, non multipli
+- I trasferimenti spostano denaro tra due conti diversi, senza tag e senza roundup/saveback
+- ROUNDUP: importo scritto manualmente dall'utente ogni volta, solo se il conto lo ha attivo
+- SAVEBACK: può essere calcolato automaticamente dalla percentuale impostata sul conto, ma resta sempre modificabile al momento dell'inserimento
+- Filtri disponibili in Movimenti: tipo, conto, tag, intervallo di date
+- Ogni movimento ha un campo source ('app' o 'telegram') mostrato in UI
+
+HEATMAP (stile GitHub, un quadratino per giorno)
+- Se in un giorno ci sono più categorie (entrata/uscita/investimento), il colore del quadratino è un gradiente CSS orizzontale proporzionale alle percentuali di importo di ciascuna categoria in quel giorno
+- Tre colori: verde pastello = entrate, rosso pastello = uscite, giallo pastello = investimenti
+- Le entrate sotto 1€ (arrotondamenti, interessi) non colorano la cella, per evitare rumore visivo
+- Cliccando su un giorno si apre un modale con l'elenco dettagliato di movimenti e investimenti di quella data
+- Implementato in src/components/Heatmap.jsx
+
+INVESTIMENTI
+- Campi: nome asset, tipologia/tag (determina l'aliquota fiscale: crypto, azioni, obbligazioni, etf, altro — tipologie aggiungibili dall'utente), conto di riferimento, prezzo di acquisto unitario, importo investito totale, prezzo target opzionale, data
+- Le aliquote fiscali di default sono precompilate (crypto 33%, azioni 26%, obbligazioni 12.5%, etf 26%, altro 26%) ma modificabili dalle Impostazioni
+- L'aliquota viene "congelata" sull'investimento al momento della creazione: modificarla in Impostazioni non altera gli investimenti già inseriti
+- NIENTE prezzo di mercato in tempo reale via API esterne: il calcolo del rendimento si basa solo su prezzo di acquisto vs prezzo target inserito dall'utente
+- Creare un investimento genera automaticamente una transazione di tipo "uscita" collegata (transaction_id), che addebita il conto di riferimento per l'importo investito
+- Calcoli automatici mostrati per ogni investimento: quantità, valore_al_target, plusvalenza_lorda, tasse, plusvalenza_netta, rendimento_netto%
+- Vista aggregata del portafoglio: grafico a torta della composizione per tipologia
+- Più investimenti selezionati (dello stesso conto) possono essere liquidati in blocco: genera un'unica entrata sul conto di accredito e rimuove gli investimenti liquidati dal portafoglio
+
+PREVISIONI / SPESE RICORRENTI
+- Spese ricorrenti configurabili con nome, importo, frequenza (mensile o annuale), giorno del mese (e mese per quelle annuali), data di inizio, data di fine opzionale, stato attivo/inattivo
+- La proiezione del saldo futuro somma la media mensile storica delle uscite alle spese ricorrenti attive, mese per mese, fino alla data di fine impostata
+- La data di inizio dello storico considerato per la media è configurabile dalle Impostazioni; se assente si usa tutto lo storico disponibile
+
+BOT TELEGRAM
+- Nome del bot in chat: "Gordon Gekko"
+- Si avvia in automatico quando si apre l'app, se un token è già stato salvato nelle Impostazioni
+- Se si chiude l'app, il bot risulta offline su Telegram: Telegram mette in coda i messaggi ricevuti e li consegna al polling appena il bot torna online, quindi funziona come una segreteria telefonica
+- NIENTE flusso guidato a bottoni: l'unica modalità di inserimento è il "messaggio-schema"
+- Il bot può solo AGGIUNGERE nuove transazioni/investimenti/trasferimenti, non modificare o cancellare quelli esistenti
+- Whitelist di sicurezza: uno o più Chat ID Telegram autorizzati (separati da virgola) inseriti manualmente dall'utente nelle Impostazioni; il bot ignora/rifiuta qualunque chat_id non in whitelist, e su /start non autorizzato rivela il proprio chat_id per facilitare la configurazione
+- Comandi: /start, /help (mostra 4 esempi completi: entrata, uscita, investimento, trasferimento, con campi obbligatori marcati "*"), /entrate, /uscite, /investimenti, /trasferimenti (formato dettagliato senza asterischi più l'elenco aggiornato in tempo reale di conti attivi, tag e tipologie asset presenti nell'app)
+- Messaggio-schema: prima riga è "entrata" / "uscita" / "investimento" / "trasferimento", righe successive "chiave: valore"
+- Conto/tag/tipologia devono corrispondere esattamente (case-insensitive) a quelli già esistenti nell'app; i conti chiusi vengono rifiutati
+- Se il messaggio non è valido il bot risponde con l'elenco degli errori e lascia il messaggio in chat; se è valido inserisce il dato e cancella il messaggio originale
+- Ogni transazione/investimento generato dal bot ha uno uuid generato dal bot stesso al momento dell'inserimento
+
+BACKUP DATABASE (Impostazioni)
+- Esporta: fa un checkpoint del WAL SQLite e copia il file .db in un percorso scelto dall'utente tramite dialogo nativo di sistema
+- Importa: valida che il file scelto sia un database SQLite con le tabelle attese, poi chiude la connessione corrente, sostituisce il file .db e riapre la connessione; sostituisce interamente i dati esistenti
+- Reset: cancella tutto il contenuto del database (irreversibile, richiede conferma testuale "RESET"); l'ordine di cancellazione rispetta i vincoli di foreign key (investments prima di transactions, per via di investments.transaction_id)
+
+
+3) STACK TECNICO
+-----------------
+- Electron 31+
+- React 18 (via Vite, no Next.js)
+- better-sqlite3 per il database locale (file .db nella userData path di Electron)
+- node-telegram-bot-api per il bot, in polling, eseguito nel PROCESSO MAIN di Electron (Node.js), NON nel renderer, così ha accesso diretto e sincrono al database senza passare da IPC
+- recharts per i grafici (andamento saldo, proiezione, composizione portafoglio)
+- uuid per generare gli identificativi univoci di transazioni/investimenti
+- electron-builder per il packaging (AppImage + deb su Linux)
+- Nessun framework CSS: variabili CSS custom in src/styles.css
+
+
+4) STRUTTURA DEL PROGETTO
+---------------------------------------------------
+Gekko-Runway/
+  package.json          — include la sezione "build" per electron-builder (appId, productName, icona, target linux)
+  vite.config.js
+  index.html
+  README.md
+  master.txt             — questo file
+  .gitignore             — esclude node_modules, dist, release, file .db/.sqlite, .env
+  build/
+    icon.png             — icona dell'app (finestra Electron + pacchetti)
+  electron/
+    main.js       — crea la finestra, inizializza DB e bot, registra tutti gli handler IPC (incluso export/import database via dialog nativi)
+    preload.js     — espone window.electronAPI al renderer via contextBridge (accounts, tags, transactions, investments, assetTaxRates, recurringExpenses, forecast, salvadanaio, heatmap, settings incluso backup, bot, onDataChanged)
+    db.js          — apertura SQLite, creazione schema, tutte le funzioni CRUD, calcolo saldo conti (incluso trasferimenti), calcolo metriche investimenti, calcolo salvadanaio, dati heatmap, proiezione forecast, export/import/checkpoint del database
+    bot.js         — bot Telegram: whitelist multi-chat-id, comandi, parsing/validazione dei messaggi-schema (entrata/uscita/investimento/trasferimento) e inserimento nel DB
+  src/
+    main.jsx       — entry point React
+    App.jsx        — layout con sidebar, routing tra pagine, tema light/dark, sottoscrizione a onDataChanged per aggiornare la UI quando il bot scrive nuovi dati
+    styles.css     — palette minimal bianco/nero + pastello (variabili CSS, incluso [data-theme='dark'])
+    utils.js       — helper di formattazione (formatMoney, formatDate, formatPercent, capitalize)
+    components/
+      Heatmap.jsx  — griglia annuale stile GitHub con gradiente CSS calcolato dalle percentuali giornaliere entrata/uscita/investimento, modale di dettaglio al click su un giorno
+    pages/
+      Dashboard.jsx     — saldo complessivo, salvadanaio, heatmap, tabella saldo per conto
+      Accounts.jsx      — CRUD conti, chiusura/riapertura, grafico andamento saldo nel tempo
+      Transactions.jsx  — CRUD entrate/uscite/trasferimenti con filtri, form con saveback/roundup per le uscite
+      Investments.jsx   — CRUD investimenti, liquidazione in blocco, tabella con tutte le metriche calcolate, grafico a torta
+      Previsioni.jsx    — CRUD spese ricorrenti, grafico proiezione saldo
+      Settings.jsx      — gestione tag entrata/uscita, aliquote fiscali per tipologia asset, date di proiezione, configurazione token bot + chat id + stato, backup database (export/import), reset database
+
+
+5) SCHEMA DATABASE (SQLite, vedi electron/db.js per il DDL completo)
+----------------------------------------------------------------------
+accounts(id, name, initial_balance, saveback_enabled, saveback_percent, roundup_enabled, active, color, created_at)
+tags(id, name, type['entrata'|'uscita'], UNIQUE(name,type))
+transactions(id, uuid, type['entrata'|'uscita'|'trasferimento'], date, amount, account_id, to_account_id, tag, note, roundup, saveback, source['app'|'telegram'], created_at)
+asset_tax_rates(type PRIMARY KEY, rate)
+investments(id, uuid, asset_name, tag, account_id, transaction_id, buy_price, amount_invested, target_price, tax_rate, date, source, created_at)
+recurring_expenses(id, uuid, name, amount, frequency['mensile'|'annuale'], day_of_month, month_of_year, active, start_date, end_date, created_at)
+settings(key PRIMARY KEY, value)   — usato per: theme, telegram_token, telegram_chat_id, forecast_start_date, forecast_end_date
+
+Il "salvadanaio" non ha una tabella propria: è una query aggregata su transactions (SUM(roundup), SUM(saveback) per le uscite).
+to_account_id su transactions è valorizzato solo per i trasferimenti.
+transaction_id su investments collega l'investimento alla transazione di acquisto generata automaticamente; viene usato per aggiornarla/eliminarla insieme all'investimento.
+
+
+6) BUILD E PACKAGING
+----------------------------------
+npm install
+npm run dev            — Vite dev server su http://localhost:5173 + Electron in modalità sviluppo, con hot reload del renderer
+npm run build           — compila il renderer React in dist/ (percorsi relativi, richiesti per il caricamento via file:// in produzione)
+npm run package:linux   — builda il renderer e genera AppImage + deb in release/ con electron-builder, usando build/icon.png come icona
+release/ non è tracciato da git (vedi .gitignore).
+
+
+7) NOTE IMPORTANTI DA NON PERDERE
+-------------------------------------
+- Il saldo del conto NON include mai roundup/saveback: solo entrate meno uscite più/meno trasferimenti (vedi accountBalanceExpr in db.js). Non reintrodurre quella logica per errore.
+- Il bot gira nel processo MAIN di Electron, non nel renderer: ha accesso diretto a db.js. Non serve e non va fatto passare tramite IPC.
+- Ogni transazione/investimento ha un campo "source" ('app' o 'telegram') per distinguere l'origine nella UI.
+- Il tema (light/dark) è salvato nella tabella settings, non in localStorage (coerente con "tutto in locale" ma dentro al DB unico).
+- resetDatabase deve cancellare investments PRIMA di transactions: l'ordine inverso viola il vincolo di foreign key su investments.transaction_id (bug reale riscontrato e corretto).
+- Import/export del database fanno sempre un wal_checkpoint(TRUNCATE) prima di copiare il file .db, altrimenti transazioni recenti rimaste nel file -wal andrebbero perse nella copia.
+- Nessun dato sensibile (database, token bot, chat id) deve mai finire nel repository git: .gitignore esclude esplicitamente file .db/.sqlite/.env, e vanno mantenuti aggiornati se si aggiungono nuovi tipi di file con dati personali.
+
+
+8) POSSIBILI MIGLIORAMENTI FUTURI (non implementati)
+--------------------------------------------------
+- Un log/registro esplicito dei messaggi-schema ricevuti dal bot (elaborati con successo o rifiutati con errori), oltre alla semplice risposta in chat.
+- Validazione più robusta dei form (attualmente minimale, solo controlli base con alert()/window.confirm()).
+- Code-splitting del bundle renderer: il build segnala un chunk JS superiore a 500kB.
+- Icona e packaging per macOS/Windows (al momento configurato solo per Linux in electron-builder).

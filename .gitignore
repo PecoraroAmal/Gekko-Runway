@@ -1,0 +1,25 @@
+# Dipendenze
+node_modules/
+
+# Build
+dist/
+release/
+out/
+
+# Database locale: contiene dati finanziari personali e il token del bot Telegram
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Variabili d'ambiente / segreti
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
