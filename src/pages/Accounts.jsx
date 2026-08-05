@@ -29,6 +29,7 @@ export default function Accounts({ refreshToken }) {
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [errors, setErrors] = useState({})
+  const [showForm, setShowForm] = useState(false)
   const [selectedAccountId, setSelectedAccountId] = useState(null)
   const [balanceHistory, setBalanceHistory] = useState([])
 
@@ -60,12 +61,23 @@ export default function Accounts({ refreshToken }) {
       color: account.color
     })
     setErrors({})
+    setShowForm(true)
   }
 
   function cancelEdit() {
     setEditingId(null)
     setForm(emptyForm)
     setErrors({})
+  }
+
+  function openCreateForm() {
+    cancelEdit()
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    cancelEdit()
+    setShowForm(false)
   }
 
   async function submitForm(e) {
@@ -88,7 +100,7 @@ export default function Accounts({ refreshToken }) {
     } else {
       await window.electronAPI.accounts.create(payload)
     }
-    cancelEdit()
+    closeForm()
     loadAccounts()
   }
 
@@ -111,69 +123,82 @@ export default function Accounts({ refreshToken }) {
     <div>
       <h1 className="page-title">Conti</h1>
 
-      <div className="card">
-        <h2 className="card-title">{editingId ? 'Modifica conto' : 'Nuovo conto'}</h2>
-        <form onSubmit={submitForm}>
-          <div className="form-grid">
-            <div className="field">
-              <label>Nome</label>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              {errors.name && <div className="field-error">{errors.name}</div>}
-            </div>
-            <div className="field">
-              <label>Saldo iniziale (€)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={form.initial_balance}
-                onChange={(e) => setForm({ ...form, initial_balance: e.target.value })}
-              />
-              {errors.initial_balance && <div className="field-error">{errors.initial_balance}</div>}
-            </div>
-            <div className="field">
-              <label>Colore</label>
-              <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />
-            </div>
-          </div>
-
-          <div className="checkbox-field">
-            <input
-              type="checkbox"
-              id="saveback_enabled"
-              checked={form.saveback_enabled}
-              onChange={(e) => setForm({ ...form, saveback_enabled: e.target.checked })}
-            />
-            <label htmlFor="saveback_enabled">Saveback attivo</label>
-          </div>
-          {form.saveback_enabled && (
-            <div className="field" style={{ maxWidth: 200 }}>
-              <label>Percentuale saveback (%)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={form.saveback_percent}
-                onChange={(e) => setForm({ ...form, saveback_percent: e.target.value })}
-              />
-              {errors.saveback_percent && <div className="field-error">{errors.saveback_percent}</div>}
-            </div>
-          )}
-
-          <div className="checkbox-field">
-            <input
-              type="checkbox"
-              id="roundup_enabled"
-              checked={form.roundup_enabled}
-              onChange={(e) => setForm({ ...form, roundup_enabled: e.target.checked })}
-            />
-            <label htmlFor="roundup_enabled">Roundup attivo</label>
-          </div>
-
-          <div className="btn-row">
-            <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Crea conto'}</button>
-            {editingId && <button type="button" className="btn" onClick={cancelEdit}>Annulla</button>}
-          </div>
-        </form>
+      <div className="btn-row" style={{ marginBottom: 20 }}>
+        <button className="btn btn-primary" onClick={openCreateForm}><i className="fa-solid fa-plus"></i>Aggiungi conto</button>
       </div>
+
+      {showForm && (
+        <div className="modal-backdrop" onClick={closeForm}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">{editingId ? 'Modifica conto' : 'Nuovo conto'}</div>
+              <button className="modal-close-btn" onClick={closeForm}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <form onSubmit={submitForm}>
+              <div className="form-grid">
+                <div className="field">
+                  <label>Nome</label>
+                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                  {errors.name && <div className="field-error">{errors.name}</div>}
+                </div>
+                <div className="field">
+                  <label>Saldo iniziale (€)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.initial_balance}
+                    onChange={(e) => setForm({ ...form, initial_balance: e.target.value })}
+                  />
+                  {errors.initial_balance && <div className="field-error">{errors.initial_balance}</div>}
+                </div>
+                <div className="field">
+                  <label>Colore</label>
+                  <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />
+                </div>
+              </div>
+
+              <div className="checkbox-field">
+                <input
+                  type="checkbox"
+                  id="saveback_enabled"
+                  checked={form.saveback_enabled}
+                  onChange={(e) => setForm({ ...form, saveback_enabled: e.target.checked })}
+                />
+                <label htmlFor="saveback_enabled">Saveback attivo</label>
+              </div>
+              {form.saveback_enabled && (
+                <div className="field" style={{ maxWidth: 200 }}>
+                  <label>Percentuale saveback (%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={form.saveback_percent}
+                    onChange={(e) => setForm({ ...form, saveback_percent: e.target.value })}
+                  />
+                  {errors.saveback_percent && <div className="field-error">{errors.saveback_percent}</div>}
+                </div>
+              )}
+
+              <div className="checkbox-field">
+                <input
+                  type="checkbox"
+                  id="roundup_enabled"
+                  checked={form.roundup_enabled}
+                  onChange={(e) => setForm({ ...form, roundup_enabled: e.target.checked })}
+                />
+                <label htmlFor="roundup_enabled">Roundup attivo</label>
+              </div>
+
+              <div className="btn-row">
+                <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Crea conto'}</button>
+                <button type="button" className="btn" onClick={closeForm}>Annulla</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <h2 className="card-title">Elenco conti</h2>

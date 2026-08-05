@@ -14,7 +14,8 @@ const emptyForm = {
   tag: '',
   note: '',
   roundup: '0',
-  saveback: '0'
+  saveback: '0',
+  include_in_forecast: true
 }
 
 function validateTransactionForm(values, account) {
@@ -51,6 +52,7 @@ export default function Transactions({ refreshToken }) {
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [errors, setErrors] = useState({})
+  const [showForm, setShowForm] = useState(false)
 
   function loadStatic() {
     window.electronAPI.accounts.getAll().then(setAccounts)
@@ -92,15 +94,27 @@ export default function Transactions({ refreshToken }) {
       tag: tx.tag || '',
       note: tx.note || '',
       roundup: String(tx.roundup || 0),
-      saveback: String(tx.saveback || 0)
+      saveback: String(tx.saveback || 0),
+      include_in_forecast: tx.include_in_forecast == null ? true : !!tx.include_in_forecast
     })
     setErrors({})
+    setShowForm(true)
   }
 
   function cancelEdit() {
     setEditingId(null)
     setForm(emptyForm)
     setErrors({})
+  }
+
+  function openCreateForm() {
+    cancelEdit()
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    cancelEdit()
+    setShowForm(false)
   }
 
   function applyCalculatedSaveback() {
@@ -126,7 +140,8 @@ export default function Transactions({ refreshToken }) {
       tag: form.type === 'trasferimento' ? null : form.tag,
       note: form.note.trim() || null,
       roundup: form.type === 'uscita' && selectedFormAccount?.roundup_enabled ? Number(form.roundup || 0) : 0,
-      saveback: form.type === 'uscita' && selectedFormAccount?.saveback_enabled ? Number(form.saveback || 0) : 0
+      saveback: form.type === 'uscita' && selectedFormAccount?.saveback_enabled ? Number(form.saveback || 0) : 0,
+      include_in_forecast: form.type === 'uscita' ? !!form.include_in_forecast : true
     }
 
     if (editingId) {
@@ -134,7 +149,7 @@ export default function Transactions({ refreshToken }) {
     } else {
       await window.electronAPI.transactions.create(payload)
     }
-    cancelEdit()
+    closeForm()
     loadTransactions()
   }
 
@@ -153,8 +168,19 @@ export default function Transactions({ refreshToken }) {
     <div>
       <h1 className="page-title">Movimenti</h1>
 
-      <div className="card">
-        <h2 className="card-title">{editingId ? 'Modifica movimento' : 'Nuovo movimento'}</h2>
+      <div className="btn-row" style={{ marginBottom: 20 }}>
+        <button className="btn btn-primary" onClick={openCreateForm}><i className="fa-solid fa-plus"></i>Aggiungi movimento</button>
+      </div>
+
+      {showForm && (
+        <div className="modal-backdrop" onClick={closeForm}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">{editingId ? 'Modifica movimento' : 'Nuovo movimento'}</div>
+              <button className="modal-close-btn" onClick={closeForm}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
         <form onSubmit={submitForm}>
           <div className="form-grid">
             <div className="field">
@@ -252,12 +278,26 @@ export default function Transactions({ refreshToken }) {
             </div>
           )}
 
+          {form.type === 'uscita' && (
+            <div className="checkbox-field" style={{ marginTop: 8 }}>
+              <input
+                type="checkbox"
+                id="include_in_forecast"
+                checked={form.include_in_forecast}
+                onChange={(e) => setForm({ ...form, include_in_forecast: e.target.checked })}
+              />
+              <label htmlFor="include_in_forecast">Considera nelle Previsioni</label>
+            </div>
+          )}
+
           <div className="btn-row" style={{ marginTop: 12 }}>
             <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Aggiungi movimento'}</button>
-            {editingId && <button type="button" className="btn" onClick={cancelEdit}>Annulla</button>}
+            <button type="button" className="btn" onClick={closeForm}>Annulla</button>
           </div>
         </form>
-      </div>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <h2 className="card-title">Filtri</h2>
@@ -319,6 +359,7 @@ export default function Transactions({ refreshToken }) {
                 <th>Nota</th>
                 <th>Roundup</th>
                 <th>Saveback</th>
+                <th>Previsioni</th>
                 <th>Origine</th>
                 <th></th>
               </tr>
@@ -338,6 +379,7 @@ export default function Transactions({ refreshToken }) {
                   <td>{tx.note || '—'}</td>
                   <td>{tx.roundup ? formatMoney(tx.roundup) : '—'}</td>
                   <td>{tx.saveback ? formatMoney(tx.saveback) : '—'}</td>
+                  <td>{tx.type === 'uscita' ? (tx.include_in_forecast ? 'Sì' : 'No') : '—'}</td>
                   <td><span className={`badge badge-${tx.source}`}>{tx.source}</span></td>
                   <td>
                     <div className="btn-row">

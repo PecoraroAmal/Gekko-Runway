@@ -1,13 +1,12 @@
 # Gekko-Runway
 
-App di finanza personale **100% locale** (Electron + React + SQLite), con un bot Telegram opzionale per inserire dati anche da telefono. Nessun backend cloud, nessuna sincronizzazione remota: tutto — conti, movimenti, investimenti, token del bot — resta su disco, nella cartella dati dell'utente. Vedi [`master.txt`](master.txt) per la spec di progetto completa.
+App di finanza personale **self-hosted** (Node.js/Express + React + SQLite). Nessuna sincronizzazione remota: tutto — conti, movimenti, investimenti — resta su disco, nella cartella `data/` locale al progetto. Vedi [`master.txt`](master.txt) per la spec di progetto completa.
 
 ## Stack tecnico
 
-- **Electron 31** — processo main in Node.js, gestisce finestra, database e bot Telegram
-- **React 18** (via **Vite**) — interfaccia utente nel renderer
+- **Express** — server Node.js: serve il frontend compilato ed espone l'API sotto `/api/gekko-runway/`
+- **React 18** (via **Vite**) — interfaccia utente
 - **better-sqlite3** — database SQLite locale, sincrono
-- **node-telegram-bot-api** — bot Telegram in polling, eseguito nel processo main
 - **recharts** — grafici (andamento saldo, proiezioni, composizione portafoglio)
 - Nessun framework CSS: variabili CSS custom in `src/styles.css`, light/dark mode
 
@@ -20,7 +19,7 @@ Saldo complessivo (conti + investimenti), totale del salvadanaio (roundup + save
 Conti multipli in EUR, ciascuno con saldo iniziale modificabile, colore identificativo, **roundup** e **saveback** attivabili singolarmente (con percentuale saveback configurabile per conto). Il saldo corrente è sempre calcolato come `saldo_iniziale + entrate − uscite ± trasferimenti` — roundup e saveback non lo intaccano, confluiscono solo nel salvadanaio. I conti si possono chiudere (restano in sola lettura, con storico visibile) o eliminare (cascade su tutte le transazioni collegate). Per ogni conto è disponibile il grafico dell'andamento del saldo nel tempo.
 
 ### Movimenti
-Entrate, uscite e **trasferimenti** tra conti, con data, importo, tag (categoria, un solo tag per movimento), nota. Per le uscite, se il conto ha roundup/saveback attivi, si possono inserire i relativi importi (il saveback può essere calcolato automaticamente dalla percentuale del conto, ma resta sempre modificabile a mano). Filtri per tipo, conto, tag e intervallo di date. Ogni movimento mostra la propria origine (`app` o `telegram`).
+Entrate, uscite e **trasferimenti** tra conti, con data, importo, tag (categoria, un solo tag per movimento), nota. Per le uscite, se il conto ha roundup/saveback attivi, si possono inserire i relativi importi (il saveback può essere calcolato automaticamente dalla percentuale del conto, ma resta sempre modificabile a mano). Filtri per tipo, conto, tag e intervallo di date.
 
 ### Investimenti
 Portafoglio con nome asset, tipologia (crypto, azioni, obbligazioni, ETF, altro — tipologie personalizzabili), conto di riferimento, prezzo di acquisto, importo investito, prezzo target opzionale, data. Calcolo automatico di quantità, plusvalenza lorda/netta e rendimento netto in base all'aliquota fiscale della tipologia (congelata al momento della creazione: cambiarla in Impostazioni non altera gli investimenti già inseriti). Grafico a torta della composizione del portafoglio per tipologia. Gli investimenti selezionati (dello stesso conto) possono essere **liquidati** in blocco, generando un'entrata sul conto e rimuovendoli dal portafoglio.
@@ -32,40 +31,33 @@ Proiezione del saldo futuro basata sulla media mensile storica delle uscite più
 - Gestione tag personalizzati per entrate/uscite
 - Aliquote fiscali per tipologia di investimento (crypto 33%, azioni 26%, obbligazioni 12,5%, ETF 26%, altro 26% di default, tutte modificabili, nuove tipologie aggiungibili)
 - Date di inizio/fine per le proiezioni
-- Configurazione bot Telegram (token, chat ID autorizzati, avvio/stop)
 - **Backup database**: esporta il file `.db` corrente per conservarlo altrove, oppure importane uno esportato in precedenza (sostituisce interamente i dati attuali)
 - **Zona pericolosa**: reset completo del database (irreversibile, richiede conferma testuale)
-
-### Bot Telegram
-Attivo solo mentre l'app è aperta; se il token è già salvato si avvia automaticamente all'apertura. Funziona come una "segreteria": i messaggi inviati mentre l'app è chiusa vengono elaborati non appena il bot torna online. Whitelist di chat ID autorizzati impostata manualmente in Impostazioni — ogni altro chat viene ignorato. Comandi disponibili:
-
-- `/start` — messaggio di benvenuto
-- `/help` — 3 esempi completi di messaggio-schema (entrata, uscita, investimento)
-- `/entrate`, `/uscite`, `/investimenti` — formato dettagliato per tipo, con l'elenco aggiornato in tempo reale di conti, tag e tipologie presenti nell'app
-
-Il bot può solo **aggiungere** nuove transazioni/investimenti (non modificare o cancellare quelli esistenti). Ogni messaggio-schema valido viene elaborato e poi cancellato dalla chat; se non valido, il bot risponde con l'elenco degli errori.
 
 ## Setup
 
 ```bash
 npm install
-npm run dev
+npm run build
+npm start
 ```
 
-Il DB SQLite viene creato automaticamente nella cartella `userData` di Electron (es. `~/.config/gekko-runway/gekko-runway.db` su Linux).
+L'app è disponibile su `http://localhost:3000` (porta configurabile con `PORT`). Il DB SQLite viene creato automaticamente in `data/gekko-runway.db`, cartella non tracciata da git.
+
+Variabili d'ambiente opzionali:
+- `PORT` — porta di ascolto (default `3000`)
+- `IDLE_SHUTDOWN_MINUTES` — minuti di inattività prima dell'arresto automatico del processo, `0` per disabilitarlo (default `15`)
+- `LISTEN_FDS` — impostata automaticamente da systemd in caso di socket activation
 
 ## Dati e privacy
 
-Tutti i dati (conti, movimenti, investimenti, token del bot) restano solo sul disco locale, nella cartella `userData` di Electron — mai nella cartella del repository. Il `.gitignore` esclude comunque esplicitamente file `.db`/`.sqlite` e `.env`, così un eventuale export del database o una configurazione locale non finiscono mai per errore in un commit.
+Tutti i dati (conti, movimenti, investimenti) restano solo sul disco locale, nella cartella `data/` del progetto — mai nella cartella del repository git. Il `.gitignore` esclude esplicitamente `data/`, i file `.db`/`.sqlite` e `.env`, così un eventuale export del database o una configurazione locale non finiscono mai per errore in un commit.
 
 ## Build
 
 ```bash
-npm run build          # bundle del renderer in dist/
-npm run package:linux   # pacchetti AppImage + deb in release/ (electron-builder)
+npm run build   # bundle del frontend in dist/, servito da server.js
 ```
-
-L'icona dell'app si trova in `build/icon.png` ed è usata sia dalla finestra Electron in sviluppo sia dai pacchetti generati da `electron-builder`.
 
 ## Note
 

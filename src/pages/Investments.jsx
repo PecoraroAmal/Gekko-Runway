@@ -46,6 +46,7 @@ export default function Investments({ refreshToken }) {
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [errors, setErrors] = useState({})
+  const [showForm, setShowForm] = useState(false)
 
   const [selectedIds, setSelectedIds] = useState([])
   const [liquidateForm, setLiquidateForm] = useState(emptyLiquidateForm)
@@ -87,12 +88,23 @@ export default function Investments({ refreshToken }) {
       date: inv.date
     })
     setErrors({})
+    setShowForm(true)
   }
 
   function cancelEdit() {
     setEditingId(null)
     setForm(emptyForm)
     setErrors({})
+  }
+
+  function openCreateForm() {
+    cancelEdit()
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    cancelEdit()
+    setShowForm(false)
   }
 
   async function submitForm(e) {
@@ -116,7 +128,7 @@ export default function Investments({ refreshToken }) {
     } else {
       await window.electronAPI.investments.create(payload)
     }
-    cancelEdit()
+    closeForm()
     loadAll()
   }
 
@@ -194,71 +206,84 @@ export default function Investments({ refreshToken }) {
         </div>
       </div>
 
-      <div className="card">
-        <h2 className="card-title">{editingId ? 'Modifica investimento' : 'Nuovo investimento'}</h2>
-        <form onSubmit={submitForm}>
-          <div className="form-grid">
-            <div className="field">
-              <label>Nome asset</label>
-              <input
-                value={form.asset_name}
-                onChange={(e) => setForm({ ...form, asset_name: e.target.value })}
-                list="known-asset-names"
-              />
-              <datalist id="known-asset-names">
-                {knownAssetNames.map((name) => (
-                  <option key={name} value={name} />
-                ))}
-              </datalist>
-              {errors.asset_name && <div className="field-error">{errors.asset_name}</div>}
-            </div>
-            <div className="field">
-              <label>Tipologia</label>
-              <select value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })}>
-                <option value="">Seleziona…</option>
-                {taxRates.map((r) => (
-                  <option key={r.type} value={r.type}>{capitalize(r.type)} ({r.rate}%)</option>
-                ))}
-              </select>
-              {errors.tag && <div className="field-error">{errors.tag}</div>}
-            </div>
-            <div className="field">
-              <label>Conto di riferimento</label>
-              <select value={form.account_id} onChange={(e) => setForm({ ...form, account_id: e.target.value })}>
-                <option value="">Seleziona…</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-              {errors.account_id && <div className="field-error">{errors.account_id}</div>}
-            </div>
-            <div className="field">
-              <label>Prezzo acquisto unitario (€)</label>
-              <input type="number" step="0.0001" value={form.buy_price} onChange={(e) => setForm({ ...form, buy_price: e.target.value })} />
-              {errors.buy_price && <div className="field-error">{errors.buy_price}</div>}
-            </div>
-            <div className="field">
-              <label>Importo investito totale (€)</label>
-              <input type="number" step="0.01" value={form.amount_invested} onChange={(e) => setForm({ ...form, amount_invested: e.target.value })} />
-              {errors.amount_invested && <div className="field-error">{errors.amount_invested}</div>}
-            </div>
-            <div className="field">
-              <label>Prezzo target (€, opzionale)</label>
-              <input type="number" step="0.0001" value={form.target_price} onChange={(e) => setForm({ ...form, target_price: e.target.value })} />
-              {errors.target_price && <div className="field-error">{errors.target_price}</div>}
-            </div>
-            <div className="field">
-              <label>Data</label>
-              <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-              {errors.date && <div className="field-error">{errors.date}</div>}
-            </div>
-          </div>
-          <div className="btn-row">
-            <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Aggiungi investimento'}</button>
-            {editingId && <button type="button" className="btn" onClick={cancelEdit}>Annulla</button>}
-          </div>
-        </form>
+      <div className="btn-row" style={{ marginBottom: 20 }}>
+        <button className="btn btn-primary" onClick={openCreateForm}><i className="fa-solid fa-plus"></i>Aggiungi investimento</button>
       </div>
+
+      {showForm && (
+        <div className="modal-backdrop" onClick={closeForm}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">{editingId ? 'Modifica investimento' : 'Nuovo investimento'}</div>
+              <button className="modal-close-btn" onClick={closeForm}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <form onSubmit={submitForm}>
+              <div className="form-grid">
+                <div className="field">
+                  <label>Nome asset</label>
+                  <input
+                    value={form.asset_name}
+                    onChange={(e) => setForm({ ...form, asset_name: e.target.value })}
+                    list="known-asset-names"
+                  />
+                  <datalist id="known-asset-names">
+                    {knownAssetNames.map((name) => (
+                      <option key={name} value={name} />
+                    ))}
+                  </datalist>
+                  {errors.asset_name && <div className="field-error">{errors.asset_name}</div>}
+                </div>
+                <div className="field">
+                  <label>Tipologia</label>
+                  <select value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })}>
+                    <option value="">Seleziona…</option>
+                    {taxRates.map((r) => (
+                      <option key={r.type} value={r.type}>{capitalize(r.type)} ({r.rate}%)</option>
+                    ))}
+                  </select>
+                  {errors.tag && <div className="field-error">{errors.tag}</div>}
+                </div>
+                <div className="field">
+                  <label>Conto di riferimento</label>
+                  <select value={form.account_id} onChange={(e) => setForm({ ...form, account_id: e.target.value })}>
+                    <option value="">Seleziona…</option>
+                    {accounts.map((a) => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
+                  {errors.account_id && <div className="field-error">{errors.account_id}</div>}
+                </div>
+                <div className="field">
+                  <label>Prezzo acquisto unitario (€)</label>
+                  <input type="number" step="0.0001" value={form.buy_price} onChange={(e) => setForm({ ...form, buy_price: e.target.value })} />
+                  {errors.buy_price && <div className="field-error">{errors.buy_price}</div>}
+                </div>
+                <div className="field">
+                  <label>Importo investito totale (€)</label>
+                  <input type="number" step="0.01" value={form.amount_invested} onChange={(e) => setForm({ ...form, amount_invested: e.target.value })} />
+                  {errors.amount_invested && <div className="field-error">{errors.amount_invested}</div>}
+                </div>
+                <div className="field">
+                  <label>Prezzo target (€, opzionale)</label>
+                  <input type="number" step="0.0001" value={form.target_price} onChange={(e) => setForm({ ...form, target_price: e.target.value })} />
+                  {errors.target_price && <div className="field-error">{errors.target_price}</div>}
+                </div>
+                <div className="field">
+                  <label>Data</label>
+                  <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                  {errors.date && <div className="field-error">{errors.date}</div>}
+                </div>
+              </div>
+              <div className="btn-row">
+                <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Aggiungi investimento'}</button>
+                <button type="button" className="btn" onClick={closeForm}>Annulla</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <h2 className="card-title">Composizione portafoglio</h2>

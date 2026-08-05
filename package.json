@@ -1,38 +1,21 @@
 {
   "name": "gekko-runway",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
-  "description": "App di finanza personale locale (Electron + React + SQLite) con bot Telegram",
-  "main": "electron/main.js",
+  "description": "App di finanza personale locale (Node.js/Express + React + SQLite)",
+  "main": "server.js",
   "author": {
     "name": "PecoraroAmal",
     "email": "amal.pecoraro@gmail.com"
   },
   "scripts": {
-    "dev": "concurrently -k \"vite\" \"npm:electron:dev\"",
-    "electron:dev": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
     "build": "vite build",
-    "start": "electron .",
-    "postinstall": "electron-builder install-app-deps",
-    "package:linux": "npm run build && electron-builder --linux"
-  },
-  "build": {
-    "appId": "com.gekkorunway.app",
-    "productName": "Gekko-Runway",
-    "files": ["electron/**/*", "dist/**/*", "package.json"],
-    "directories": {
-      "output": "release"
-    },
-    "linux": {
-      "icon": "build/icons",
-      "category": "Finance",
-      "target": ["AppImage", "deb"]
-    }
+    "start": "node server.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.3.0",
     "better-sqlite3": "^11.3.0",
-    "node-telegram-bot-api": "^0.66.0",
+    "express": "^4.19.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.12.7",
@@ -40,11 +23,6 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
-    "concurrently": "^8.2.2",
-    "cross-env": "^7.0.3",
-    "electron": "^31.3.0",
-    "electron-builder": "^24.13.3",
-    "vite": "^5.4.0",
-    "wait-on": "^7.2.0"
+    "vite": "^5.4.0"
   }
 }

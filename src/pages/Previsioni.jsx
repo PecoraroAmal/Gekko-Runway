@@ -48,6 +48,7 @@ export default function Previsioni({ refreshToken }) {
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [errors, setErrors] = useState({})
+  const [showForm, setShowForm] = useState(false)
 
   function loadAll() {
     window.electronAPI.recurringExpenses.getAll().then(setExpenses)
@@ -69,12 +70,23 @@ export default function Previsioni({ refreshToken }) {
       end_date: exp.end_date || ''
     })
     setErrors({})
+    setShowForm(true)
   }
 
   function cancelEdit() {
     setEditingId(null)
     setForm(emptyForm)
     setErrors({})
+  }
+
+  function openCreateForm() {
+    cancelEdit()
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    cancelEdit()
+    setShowForm(false)
   }
 
   async function submitForm(e) {
@@ -99,7 +111,7 @@ export default function Previsioni({ refreshToken }) {
     } else {
       await window.electronAPI.recurringExpenses.create(payload)
     }
-    cancelEdit()
+    closeForm()
     loadAll()
   }
 
@@ -144,77 +156,90 @@ export default function Previsioni({ refreshToken }) {
         )}
       </div>
 
-      <div className="card">
-        <h2 className="card-title">{editingId ? 'Modifica spesa ciclica' : 'Nuova spesa ciclica'}</h2>
-        <form onSubmit={submitForm}>
-          <div className="form-grid">
-            <div className="field">
-              <label>Nome</label>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              {errors.name && <div className="field-error">{errors.name}</div>}
-            </div>
-            <div className="field">
-              <label>Importo (€)</label>
-              <input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
-              {errors.amount && <div className="field-error">{errors.amount}</div>}
-            </div>
-            <div className="field">
-              <label>Frequenza</label>
-              <select value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })}>
-                <option value="mensile">Mensile</option>
-                <option value="annuale">Annuale</option>
-              </select>
-            </div>
-            <div className="field">
-              <label>Giorno del mese</label>
-              <input
-                type="number"
-                min="1"
-                max="31"
-                value={form.day_of_month}
-                onChange={(e) => setForm({ ...form, day_of_month: e.target.value })}
-              />
-              {errors.day_of_month && <div className="field-error">{errors.day_of_month}</div>}
-            </div>
-            {form.frequency === 'annuale' && (
-              <div className="field">
-                <label>Mese</label>
-                <select value={form.month_of_year} onChange={(e) => setForm({ ...form, month_of_year: e.target.value })}>
-                  {MONTH_NAMES.map((name, i) => (
-                    <option key={i + 1} value={i + 1}>{name}</option>
-                  ))}
-                </select>
-                {errors.month_of_year && <div className="field-error">{errors.month_of_year}</div>}
-              </div>
-            )}
-            <div className="field">
-              <label>Data inizio</label>
-              <input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
-              {errors.start_date && <div className="field-error">{errors.start_date}</div>}
-            </div>
-            <div className="field">
-              <label>Data fine (opzionale)</label>
-              <input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
-              {errors.end_date && <div className="field-error">{errors.end_date}</div>}
-            </div>
-          </div>
-
-          <div className="checkbox-field">
-            <input
-              type="checkbox"
-              id="recurring_active"
-              checked={form.active}
-              onChange={(e) => setForm({ ...form, active: e.target.checked })}
-            />
-            <label htmlFor="recurring_active">Attiva</label>
-          </div>
-
-          <div className="btn-row">
-            <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Aggiungi spesa ciclica'}</button>
-            {editingId && <button type="button" className="btn" onClick={cancelEdit}>Annulla</button>}
-          </div>
-        </form>
+      <div className="btn-row" style={{ marginBottom: 20 }}>
+        <button className="btn btn-primary" onClick={openCreateForm}><i className="fa-solid fa-plus"></i>Aggiungi spesa ciclica</button>
       </div>
+
+      {showForm && (
+        <div className="modal-backdrop" onClick={closeForm}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">{editingId ? 'Modifica spesa ciclica' : 'Nuova spesa ciclica'}</div>
+              <button className="modal-close-btn" onClick={closeForm}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <form onSubmit={submitForm}>
+              <div className="form-grid">
+                <div className="field">
+                  <label>Nome</label>
+                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                  {errors.name && <div className="field-error">{errors.name}</div>}
+                </div>
+                <div className="field">
+                  <label>Importo (€)</label>
+                  <input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                  {errors.amount && <div className="field-error">{errors.amount}</div>}
+                </div>
+                <div className="field">
+                  <label>Frequenza</label>
+                  <select value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })}>
+                    <option value="mensile">Mensile</option>
+                    <option value="annuale">Annuale</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Giorno del mese</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={form.day_of_month}
+                    onChange={(e) => setForm({ ...form, day_of_month: e.target.value })}
+                  />
+                  {errors.day_of_month && <div className="field-error">{errors.day_of_month}</div>}
+                </div>
+                {form.frequency === 'annuale' && (
+                  <div className="field">
+                    <label>Mese</label>
+                    <select value={form.month_of_year} onChange={(e) => setForm({ ...form, month_of_year: e.target.value })}>
+                      {MONTH_NAMES.map((name, i) => (
+                        <option key={i + 1} value={i + 1}>{name}</option>
+                      ))}
+                    </select>
+                    {errors.month_of_year && <div className="field-error">{errors.month_of_year}</div>}
+                  </div>
+                )}
+                <div className="field">
+                  <label>Data inizio</label>
+                  <input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+                  {errors.start_date && <div className="field-error">{errors.start_date}</div>}
+                </div>
+                <div className="field">
+                  <label>Data fine (opzionale)</label>
+                  <input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+                  {errors.end_date && <div className="field-error">{errors.end_date}</div>}
+                </div>
+              </div>
+
+              <div className="checkbox-field">
+                <input
+                  type="checkbox"
+                  id="recurring_active"
+                  checked={form.active}
+                  onChange={(e) => setForm({ ...form, active: e.target.checked })}
+                />
+                <label htmlFor="recurring_active">Attiva</label>
+              </div>
+
+              <div className="btn-row">
+                <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Aggiungi spesa ciclica'}</button>
+                <button type="button" className="btn" onClick={closeForm}>Annulla</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <h2 className="card-title">Spese cicliche</h2>

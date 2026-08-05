@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { capitalize } from '../utils.js'
 
-export default function Settings({ refreshToken }) {
+export default function Settings({ refreshToken, theme, onToggleTheme }) {
   const [tagsEntrata, setTagsEntrata] = useState([])
   const [tagsUscita, setTagsUscita] = useState([])
   const [newTagName, setNewTagName] = useState('')
@@ -13,13 +13,6 @@ export default function Settings({ refreshToken }) {
   const [newRateType, setNewRateType] = useState('')
   const [newRateValue, setNewRateValue] = useState('')
   const [rateError, setRateError] = useState('')
-
-  const [token, setToken] = useState('')
-  const [chatId, setChatId] = useState('')
-  const [tokenFocused, setTokenFocused] = useState(false)
-  const [chatIdFocused, setChatIdFocused] = useState(false)
-  const [botRunning, setBotRunning] = useState(false)
-  const [botMessage, setBotMessage] = useState('')
 
   const [resetConfirmText, setResetConfirmText] = useState('')
   const [resetMessage, setResetMessage] = useState('')
@@ -41,12 +34,9 @@ export default function Settings({ refreshToken }) {
       setRateEdits(edits)
     })
     window.electronAPI.settings.getAll().then((s) => {
-      setToken(s.telegram_token || '')
-      setChatId(s.telegram_chat_id || '')
       setForecastStartDate(s.forecast_start_date || '')
       setForecastEndDate(s.forecast_end_date || '')
     })
-    window.electronAPI.bot.status().then((s) => setBotRunning(s.running))
   }
 
   useEffect(loadAll, [refreshToken])
@@ -97,35 +87,6 @@ export default function Settings({ refreshToken }) {
     loadAll()
   }
 
-  async function startBot() {
-    setBotMessage('')
-    if (!token.trim()) {
-      setBotMessage('Inserisci un token valido')
-      return
-    }
-    if (chatId.trim()) {
-      await window.electronAPI.settings.set({ key: 'telegram_chat_id', value: chatId.trim() })
-    }
-    const result = await window.electronAPI.bot.start({ token: token.trim() })
-    if (!result.success) {
-      setBotMessage(`Errore: ${result.error}`)
-    } else {
-      setBotMessage('Bot avviato.')
-    }
-    window.electronAPI.bot.status().then((s) => setBotRunning(s.running))
-  }
-
-  async function stopBot() {
-    await window.electronAPI.bot.stop()
-    setBotMessage('Bot fermato.')
-    setBotRunning(false)
-  }
-
-  async function saveChatId() {
-    await window.electronAPI.settings.set({ key: 'telegram_chat_id', value: chatId.trim() })
-    setBotMessage('Chat ID salvato.')
-  }
-
   async function saveForecastDates() {
     setForecastMessage('')
     if (forecastStartDate && !/^\d{4}-\d{2}-\d{2}$/.test(forecastStartDate)) {
@@ -163,7 +124,7 @@ export default function Settings({ refreshToken }) {
   }
 
   async function importDatabase() {
-    if (!window.confirm('Importando un database TUTTI i dati attuali (conti, movimenti, investimenti, tag, aliquote, configurazione bot) verranno sostituiti con quelli del file selezionato. Continuare?')) {
+    if (!window.confirm('Importando un database TUTTI i dati attuali (conti, movimenti, investimenti, tag, aliquote) verranno sostituiti con quelli del file selezionato. Continuare?')) {
       return
     }
     setBackupMessage('')
@@ -185,21 +146,28 @@ export default function Settings({ refreshToken }) {
 
   async function resetDatabase() {
     if (resetConfirmText !== 'RESET') return
-    if (!window.confirm('Questa azione è irreversibile: TUTTI i dati (conti, movimenti, investimenti, tag, aliquote, configurazione bot) verranno eliminati definitivamente. Continuare?')) {
+    if (!window.confirm('Questa azione è irreversibile: TUTTI i dati (conti, movimenti, investimenti, tag, aliquote) verranno eliminati definitivamente. Continuare?')) {
       return
     }
     await window.electronAPI.settings.resetDatabase()
     setResetConfirmText('')
     setResetMessage('Database resettato.')
-    setToken('')
-    setChatId('')
-    setBotRunning(false)
     loadAll()
   }
 
   return (
     <div>
       <h1 className="page-title">Impostazioni</h1>
+
+      <div className="card">
+        <h2 className="card-title">Aspetto</h2>
+        <div className="btn-row">
+          <button className="btn" onClick={onToggleTheme}>
+            <i className={theme === 'light' ? 'fa-regular fa-moon' : 'fa-regular fa-sun'}></i>
+            {theme === 'light' ? 'Passa a modalità scura' : 'Passa a modalità chiara'}
+          </button>
+        </div>
+      </div>
 
       <div className="card">
         <h2 className="card-title">Tag entrate</h2>
@@ -321,46 +289,6 @@ export default function Settings({ refreshToken }) {
       </div>
 
       <div className="card">
-        <h2 className="card-title">Bot Telegram</h2>
-        <div className="form-grid">
-          <div className="field">
-            <label>Token bot</label>
-            <input
-              type={tokenFocused ? 'text' : 'password'}
-              value={token}
-              onFocus={() => setTokenFocused(true)}
-              onBlur={() => setTokenFocused(false)}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="123456:ABC-..."
-            />
-          </div>
-          <div className="field">
-            <label>Chat ID autorizzati (separati da virgola)</label>
-            <input
-              type={chatIdFocused ? 'text' : 'password'}
-              value={chatId}
-              onFocus={() => setChatIdFocused(true)}
-              onBlur={() => setChatIdFocused(false)}
-              onChange={(e) => setChatId(e.target.value)}
-              placeholder="es. 123456789, -1001234567890"
-            />
-          </div>
-        </div>
-        <div className="btn-row">
-          <button className="btn" onClick={saveChatId}><i className="fa-regular fa-floppy-disk"></i>Salva Chat ID</button>
-          {botRunning ? (
-            <button className="btn btn-danger" onClick={stopBot}><i className="fa-solid fa-stop"></i>Ferma bot</button>
-          ) : (
-            <button className="btn btn-primary" onClick={startBot}><i className="fa-solid fa-play"></i>Avvia bot</button>
-          )}
-        </div>
-        <div style={{ marginTop: 12, fontSize: 13, color: 'var(--fg-muted)' }}>
-          Stato: {botRunning ? 'in esecuzione' : 'fermo'}
-          {botMessage && <div>{botMessage}</div>}
-        </div>
-      </div>
-
-      <div className="card">
         <h2 className="card-title">Backup database</h2>
         <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginTop: 0 }}>
           Esporta il file del database (conti, movimenti, investimenti, tag, aliquote e configurazione)
@@ -381,8 +309,8 @@ export default function Settings({ refreshToken }) {
       <div className="card" style={{ borderColor: 'var(--pastel-red)' }}>
         <h2 className="card-title" style={{ color: 'var(--pastel-red-dark)' }}>Zona pericolosa</h2>
         <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginTop: 0 }}>
-          Elimina definitivamente tutti i dati: conti, movimenti, investimenti, tag, aliquote fiscali e
-          configurazione del bot Telegram. L'operazione non può essere annullata.
+          Elimina definitivamente tutti i dati: conti, movimenti, investimenti, tag e aliquote fiscali.
+          L'operazione non può essere annullata.
         </p>
         <div className="form-grid" style={{ maxWidth: 320 }}>
           <div className="field">

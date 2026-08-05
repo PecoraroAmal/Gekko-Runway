@@ -43,7 +43,6 @@ export default function App() {
   return (
     <div className="app-shell">
       <div className="sidebar">
-        <div className="sidebar-logo" title="Gekko-Runway"><i className="fa-solid fa-coins"></i></div>
         {PAGES.map((p) => (
           <div
             key={p.key}
@@ -54,9 +53,6 @@ export default function App() {
             <i className={p.icon}></i>
           </div>
         ))}
-        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'light' ? 'Modalità scura' : 'Modalità chiara'}>
-          <i className={theme === 'light' ? 'fa-regular fa-moon' : 'fa-regular fa-sun'}></i>
-        </button>
       </div>
       <div className="main-content">
         {page === 'dashboard' && <Dashboard refreshToken={refreshToken} />}
@@ -64,7 +60,7 @@ export default function App() {
         {page === 'transactions' && <Transactions refreshToken={refreshToken} />}
         {page === 'investments' && <Investments refreshToken={refreshToken} />}
         {page === 'previsioni' && <Previsioni refreshToken={refreshToken} />}
-        {page === 'settings' && <Settings refreshToken={refreshToken} />}
+        {page === 'settings' && <Settings refreshToken={refreshToken} theme={theme} onToggleTheme={toggleTheme} />}
       </div>
     </div>
   )

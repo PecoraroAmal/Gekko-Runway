@@ -3,10 +3,9 @@ node_modules/
 
 # Build
 dist/
-release/
-out/
 
-# Database locale: contiene dati finanziari personali e il token del bot Telegram
+# Database locale: contiene dati finanziari personali
+data/
 *.db
 *.db-shm
 *.db-wal

@@ -67,12 +67,6 @@ body {
   gap: 6px;
 }
 
-.sidebar-logo {
-  font-weight: 700;
-  font-size: 18px;
-  margin-bottom: 16px;
-}
-
 .nav-item {
   width: 44px;
   height: 44px;
@@ -93,26 +87,6 @@ body {
 .nav-item.active {
   background: var(--accent-soft);
   font-weight: 700;
-}
-
-.theme-toggle {
-  margin-top: auto;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--fg);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.theme-toggle:hover {
-  background: var(--accent-soft);
 }
 
 .main-content {
@@ -284,7 +258,9 @@ th {
 }
 
 .btn-primary:hover {
-  opacity: 0.85;
+  background: var(--accent-soft);
+  color: var(--fg);
+  border-color: var(--border);
 }
 
 .btn-danger {
@@ -632,4 +608,36 @@ input:focus, select:focus, textarea:focus {
 
 .modal-section-title:first-child {
   margin-top: 0;
+}
+
+@media (max-width: 600px) {
+  .app-shell {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    gap: 8px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+
+  .btn-row {
+    justify-content: center;
+  }
+
+  td .btn-row {
+    justify-content: flex-start;
+  }
 }

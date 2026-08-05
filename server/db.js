@@ -1,10 +1,15 @@
 const path = require('path')
 const fs = require('fs')
-const { app } = require('electron')
 const Database = require('better-sqlite3')
 const { v4: uuidv4 } = require('uuid')
 
-const dbPath = path.join(app.getPath('userData'), 'gekko-runway.db')
+function resolveDbPath() {
+  const dataDir = path.join(__dirname, '..', 'data')
+  fs.mkdirSync(dataDir, { recursive: true })
+  return path.join(dataDir, 'gekko-runway.db')
+}
+
+const dbPath = resolveDbPath()
 let db = new Database(dbPath)
 db.pragma('journal_mode = WAL')
 db.pragma('foreign_keys = ON')
@@ -41,6 +46,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   note TEXT,
   roundup REAL NOT NULL DEFAULT 0,
   saveback REAL NOT NULL DEFAULT 0,
+  include_in_forecast INTEGER NOT NULL DEFAULT 1,
   source TEXT NOT NULL DEFAULT 'app' CHECK(source IN ('app','telegram')),
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -171,6 +177,11 @@ if (!transactionsTableSql.includes('trasferimento')) {
   db.pragma('foreign_keys = ON')
 }
 
+// --- Migrazione: aggiunge include_in_forecast a transactions se il DB esisteva già senza questa colonna ---
+if (!db.prepare('PRAGMA table_info(transactions)').all().map((c) => c.name).includes('include_in_forecast')) {
+  db.exec('ALTER TABLE transactions ADD COLUMN include_in_forecast INTEGER NOT NULL DEFAULT 1')
+}
+
 // --- Seed idempotente ---
 const seedTags = db.prepare('INSERT OR IGNORE INTO tags (name, type) VALUES (?, ?)')
 const seedTagsTx = db.transaction(() => {
@@ -196,7 +207,7 @@ db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme', 'light'
 const accountBalanceExpr = `
   a.initial_balance
   + COALESCE((SELECT SUM(amount) FROM transactions WHERE account_id = a.id AND type = 'entrata'), 0)
-  - COALESCE((SELECT SUM(amount) FROM transactions WHERE account_id = a.id AND type = 'uscita'), 0)
+  - COALESCE((SELECT SUM(amount + roundup + saveback) FROM transactions WHERE account_id = a.id AND type = 'uscita'), 0)
   - COALESCE((SELECT SUM(amount) FROM transactions WHERE account_id = a.id AND type = 'trasferimento'), 0)
   + COALESCE((SELECT SUM(amount) FROM transactions WHERE to_account_id = a.id AND type = 'trasferimento'), 0)
 `
@@ -253,7 +264,7 @@ function getBalanceHistory(accountId) {
   if (!account) return []
   const rows = db
     .prepare(
-      `SELECT date, id, type, amount, account_id, to_account_id FROM transactions
+      `SELECT date, id, type, amount, roundup, saveback, account_id, to_account_id FROM transactions
        WHERE account_id = ? OR (to_account_id = ? AND type = 'trasferimento')
        ORDER BY date ASC, id ASC`
     )
@@ -261,7 +272,7 @@ function getBalanceHistory(accountId) {
   let running = account.initial_balance
   return rows.map((r) => {
     if (r.type === 'entrata') running += r.amount
-    else if (r.type === 'uscita') running -= r.amount
+    else if (r.type === 'uscita') running -= r.amount + r.roundup + r.saveback
     else if (r.type === 'trasferimento' && r.account_id === accountId) running -= r.amount
     else if (r.type === 'trasferimento' && r.to_account_id === accountId) running += r.amount
     return { date: r.date, balance: running }
@@ -321,8 +332,8 @@ function createTransaction(data) {
   const uuid = data.uuid || uuidv4()
   const info = db
     .prepare(
-      `INSERT INTO transactions (uuid, type, date, amount, account_id, to_account_id, tag, note, roundup, saveback, source)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO transactions (uuid, type, date, amount, account_id, to_account_id, tag, note, roundup, saveback, include_in_forecast, source)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       uuid,
@@ -335,17 +346,20 @@ function createTransaction(data) {
       data.note || null,
       data.roundup || 0,
       data.saveback || 0,
+      data.include_in_forecast === false ? 0 : 1,
       data.source || 'app'
     )
   return db.prepare('SELECT * FROM transactions WHERE id = ?').get(info.lastInsertRowid)
 }
 
+const TRANSACTION_BOOLEAN_FIELDS = ['include_in_forecast']
+
 function updateTransaction(id, fields) {
-  const allowed = ['type', 'date', 'amount', 'account_id', 'to_account_id', 'tag', 'note', 'roundup', 'saveback']
+  const allowed = ['type', 'date', 'amount', 'account_id', 'to_account_id', 'tag', 'note', 'roundup', 'saveback', 'include_in_forecast']
   const keys = Object.keys(fields).filter((k) => allowed.includes(k))
   if (keys.length === 0) return db.prepare('SELECT * FROM transactions WHERE id = ?').get(id)
   const setClause = keys.map((k) => `${k} = ?`).join(', ')
-  const values = keys.map((k) => fields[k])
+  const values = keys.map((k) => (TRANSACTION_BOOLEAN_FIELDS.includes(k) ? (fields[k] ? 1 : 0) : fields[k]))
   db.prepare(`UPDATE transactions SET ${setClause} WHERE id = ?`).run(...values, id)
   return db.prepare('SELECT * FROM transactions WHERE id = ?').get(id)
 }
@@ -605,14 +619,14 @@ function getForecast() {
         .prepare(
           `SELECT COALESCE(SUM(amount), 0) AS total,
                   COUNT(DISTINCT strftime('%Y-%m', date)) AS monthCount
-           FROM transactions WHERE type = 'uscita' AND date >= ?`
+           FROM transactions WHERE type = 'uscita' AND include_in_forecast = 1 AND date >= ?`
         )
         .get(startDateStr)
     : db
         .prepare(
           `SELECT COALESCE(SUM(amount), 0) AS total,
                   COUNT(DISTINCT strftime('%Y-%m', date)) AS monthCount
-           FROM transactions WHERE type = 'uscita'`
+           FROM transactions WHERE type = 'uscita' AND include_in_forecast = 1`
         )
         .get()
   const avgMonthlyExpense = row.monthCount > 0 ? row.total / row.monthCount : 0
