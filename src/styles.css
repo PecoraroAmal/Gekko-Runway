@@ -201,6 +201,57 @@ body {
   }
 }
 
+.dashboard-top {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 600px) {
+  .dashboard-top .grid-3 {
+    order: 2;
+  }
+
+  .dashboard-top .grid-stats-sm {
+    order: 1;
+  }
+}
+
+.collapsible summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.collapsible-summary::after {
+  content: '▾';
+  color: var(--fg-muted);
+  transition: transform 0.15s ease;
+}
+
+.collapsible:not([open]) .collapsible-summary::after {
+  transform: rotate(-90deg);
+}
+
+.advanced-fields {
+  margin-top: 12px;
+}
+
+.advanced-fields .collapsible-summary {
+  color: var(--fg-muted);
+  font-size: 13px;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
 .formula-value {
   font-size: 22px;
   font-weight: 700;
@@ -469,6 +520,7 @@ input:focus, select:focus, textarea:focus {
   font-size: 16px;
   min-width: 70px;
   text-align: center;
+  white-space: nowrap;
 }
 
 .heatmap-wrapper {
@@ -487,6 +539,10 @@ input:focus, select:focus, textarea:focus {
   gap: 20px 32px;
   width: max-content;
   margin: 0 auto;
+}
+
+.heatmap-months-single {
+  grid-template-columns: max-content;
 }
 
 .heatmap-month-block {

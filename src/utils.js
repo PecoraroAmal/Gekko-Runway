@@ -1,3 +1,24 @@
+import { useEffect, useState } from 'react'
+
+export const MONTH_NAMES = [
+  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
+]
+
+export function useIsMobile(breakpoint = 600) {
+  const query = `(max-width: ${breakpoint}px)`
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia(query).matches)
+
+  useEffect(() => {
+    const mql = window.matchMedia(query)
+    const onChange = () => setIsMobile(mql.matches)
+    mql.addEventListener('change', onChange)
+    return () => mql.removeEventListener('change', onChange)
+  }, [query])
+
+  return isMobile
+}
+
 export function formatMoney(n) {
   return n == null || Number.isNaN(n)
     ? '—'

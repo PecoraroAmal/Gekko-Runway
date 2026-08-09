@@ -250,45 +250,50 @@ export default function Transactions({ refreshToken }) {
                 {errors.tag && <div className="field-error">{errors.tag}</div>}
               </div>
             )}
-            <div className="field">
+          </div>
+
+          <details className="collapsible advanced-fields">
+            <summary className="collapsible-summary">Altri dettagli</summary>
+
+            <div className="field" style={{ marginTop: 12 }}>
               <label>Nota</label>
               <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
             </div>
-          </div>
 
-          {form.type === 'uscita' && (selectedFormAccount?.roundup_enabled || selectedFormAccount?.saveback_enabled) && (
-            <div className="form-grid" style={{ marginTop: 4 }}>
-              {selectedFormAccount?.roundup_enabled && (
-                <div className="field">
-                  <label>Roundup (€)</label>
-                  <input type="number" step="0.01" value={form.roundup} onChange={(e) => setForm({ ...form, roundup: e.target.value })} />
-                  {errors.roundup && <div className="field-error">{errors.roundup}</div>}
-                </div>
-              )}
-              {selectedFormAccount?.saveback_enabled && (
-                <div className="field">
-                  <label>Saveback (€)</label>
-                  <input type="number" step="0.01" value={form.saveback} onChange={(e) => setForm({ ...form, saveback: e.target.value })} />
-                  {errors.saveback && <div className="field-error">{errors.saveback}</div>}
-                  <button type="button" className="btn" style={{ marginTop: 4, width: 'fit-content' }} onClick={applyCalculatedSaveback}>
-                    <i className="fa-solid fa-calculator"></i>Usa calcolato ({selectedFormAccount.saveback_percent}%)
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+            {form.type === 'uscita' && (selectedFormAccount?.roundup_enabled || selectedFormAccount?.saveback_enabled) && (
+              <div className="form-grid">
+                {selectedFormAccount?.roundup_enabled && (
+                  <div className="field">
+                    <label>Roundup (€)</label>
+                    <input type="number" step="0.01" value={form.roundup} onChange={(e) => setForm({ ...form, roundup: e.target.value })} />
+                    {errors.roundup && <div className="field-error">{errors.roundup}</div>}
+                  </div>
+                )}
+                {selectedFormAccount?.saveback_enabled && (
+                  <div className="field">
+                    <label>Saveback (€)</label>
+                    <input type="number" step="0.01" value={form.saveback} onChange={(e) => setForm({ ...form, saveback: e.target.value })} />
+                    {errors.saveback && <div className="field-error">{errors.saveback}</div>}
+                    <button type="button" className="btn" style={{ marginTop: 4, width: 'fit-content' }} onClick={applyCalculatedSaveback}>
+                      <i className="fa-solid fa-calculator"></i>Usa calcolato ({selectedFormAccount.saveback_percent}%)
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {form.type === 'uscita' && (
-            <div className="checkbox-field" style={{ marginTop: 8 }}>
-              <input
-                type="checkbox"
-                id="include_in_forecast"
-                checked={form.include_in_forecast}
-                onChange={(e) => setForm({ ...form, include_in_forecast: e.target.checked })}
-              />
-              <label htmlFor="include_in_forecast">Considera nelle Previsioni</label>
-            </div>
-          )}
+            {form.type === 'uscita' && (
+              <div className="checkbox-field" style={{ marginTop: 8 }}>
+                <input
+                  type="checkbox"
+                  id="include_in_forecast"
+                  checked={form.include_in_forecast}
+                  onChange={(e) => setForm({ ...form, include_in_forecast: e.target.checked })}
+                />
+                <label htmlFor="include_in_forecast">Considera nelle Previsioni</label>
+              </div>
+            )}
+          </details>
 
           <div className="btn-row" style={{ marginTop: 12 }}>
             <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Aggiungi movimento'}</button>

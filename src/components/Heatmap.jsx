@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { formatMoney, capitalize } from '../utils.js'
-
-const MONTH_NAMES = [
-  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
-]
+import { formatMoney, capitalize, MONTH_NAMES } from '../utils.js'
 
 function formatDate(d) {
   return d.toISOString().slice(0, 10)
@@ -54,7 +49,7 @@ function cellTitle(dateStr, entry) {
   return `${dateStr}\nEntrate: ${formatMoney(entry.entrata)}\nUscite: ${formatMoney(entry.uscita)}\nInvestimenti: ${formatMoney(entry.investimento)}`
 }
 
-export default function Heatmap({ year, refreshToken }) {
+export default function Heatmap({ year, month, refreshToken }) {
   const [dataByDate, setDataByDate] = useState({})
   const [accounts, setAccounts] = useState([])
   const [selectedDate, setSelectedDate] = useState(null)
@@ -95,13 +90,14 @@ export default function Heatmap({ year, refreshToken }) {
     })
   }
 
-  const months = buildMonthsForYear(year)
+  const allMonths = buildMonthsForYear(year)
+  const months = month == null ? allMonths : allMonths.filter((m) => m.month === month)
   const todayStr = formatDate(new Date())
 
   return (
     <div>
       <div className="heatmap-wrapper">
-        <div className="heatmap-months heatmap-cell-size">
+        <div className={`heatmap-months heatmap-cell-size${month == null ? '' : ' heatmap-months-single'}`}>
           {months.map((m) => (
             <div key={m.month} className="heatmap-month-block">
               <div className="heatmap-month-label">{MONTH_NAMES[m.month]}</div>
