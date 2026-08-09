@@ -47,31 +47,29 @@ export default function Dashboard({ refreshToken }) {
     <div>
       <h1 className="page-title">Dashboard</h1>
 
-      <div className="dashboard-top">
-        <div className="grid-3">
-          <div className="card">
-            <h2 className="card-title">Saldo</h2>
-            <div className="stat-value">{formatMoney(totalBalance)}</div>
-          </div>
-          <div className="card">
-            <h2 className="card-title">Investimenti</h2>
-            <div className="stat-value">{formatMoney(totalInvested)}</div>
-          </div>
-          <div className="card">
-            <h2 className="card-title">Totale</h2>
-            <div className="stat-value">{formatMoney(grandTotal)}</div>
-          </div>
+      <div className="grid-3">
+        <div className="card">
+          <h2 className="card-title">Saldo</h2>
+          <div className="stat-value">{formatMoney(totalBalance)}</div>
         </div>
+        <div className="card">
+          <h2 className="card-title">Investimenti</h2>
+          <div className="stat-value">{formatMoney(totalInvested)}</div>
+        </div>
+        <div className="card">
+          <h2 className="card-title">Totale</h2>
+          <div className="stat-value">{formatMoney(grandTotal)}</div>
+        </div>
+      </div>
 
-        <div className="grid-stats-sm">
-          <div className="card">
-            <h2 className="card-title">Salvadanaio Roundup</h2>
-            <div className="stat-value">{formatMoney(salvadanaio.totalRoundup)}</div>
-          </div>
-          <div className="card">
-            <h2 className="card-title">Salvadanaio Saveback</h2>
-            <div className="stat-value">{formatMoney(salvadanaio.totalSaveback)}</div>
-          </div>
+      <div className="grid-stats-sm">
+        <div className="card">
+          <h2 className="card-title">Salvadanaio Roundup</h2>
+          <div className="stat-value">{formatMoney(salvadanaio.totalRoundup)}</div>
+        </div>
+        <div className="card">
+          <h2 className="card-title">Salvadanaio Saveback</h2>
+          <div className="stat-value">{formatMoney(salvadanaio.totalSaveback)}</div>
         </div>
       </div>
 

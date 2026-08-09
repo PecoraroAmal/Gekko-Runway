@@ -201,21 +201,6 @@ body {
   }
 }
 
-.dashboard-top {
-  display: flex;
-  flex-direction: column;
-}
-
-@media (max-width: 600px) {
-  .dashboard-top .grid-3 {
-    order: 2;
-  }
-
-  .dashboard-top .grid-stats-sm {
-    order: 1;
-  }
-}
-
 .collapsible summary {
   cursor: pointer;
   list-style: none;
@@ -666,6 +651,30 @@ input:focus, select:focus, textarea:focus {
   margin-top: 0;
 }
 
+.fab-add-transaction {
+  display: none;
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 26px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  z-index: 500;
+}
+
+.fab-add-transaction:hover {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
 @media (max-width: 600px) {
   .app-shell {
     flex-direction: column;
@@ -685,8 +694,16 @@ input:focus, select:focus, textarea:focus {
     border-bottom: 1px solid var(--border);
   }
 
+  .nav-item-accounts,
+  .nav-item-transactions,
+  .nav-item-investments,
+  .nav-item-previsioni {
+    display: none;
+  }
+
   .main-content {
     padding: 16px;
+    padding-bottom: 88px;
   }
 
   .btn-row {
@@ -695,5 +712,9 @@ input:focus, select:focus, textarea:focus {
 
   td .btn-row {
     justify-content: flex-start;
+  }
+
+  .fab-add-transaction {
+    display: flex;
   }
 }

@@ -5,6 +5,10 @@ export const MONTH_NAMES = [
   'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 ]
 
+export function todayStr() {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export function useIsMobile(breakpoint = 600) {
   const query = `(max-width: ${breakpoint}px)`
   const [isMobile, setIsMobile] = useState(() => window.matchMedia(query).matches)

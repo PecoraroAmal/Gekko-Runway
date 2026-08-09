@@ -5,6 +5,7 @@ import Transactions from './pages/Transactions.jsx'
 import Investments from './pages/Investments.jsx'
 import Previsioni from './pages/Previsioni.jsx'
 import Settings from './pages/Settings.jsx'
+import TransactionFormModal from './components/TransactionFormModal.jsx'
 
 const PAGES = [
   { key: 'dashboard', label: 'Dashboard', icon: 'fa-solid fa-tachograph-digital' },
@@ -19,6 +20,7 @@ export default function App() {
   const [page, setPage] = useState('dashboard')
   const [theme, setTheme] = useState('light')
   const [refreshToken, setRefreshToken] = useState(0)
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
 
   useEffect(() => {
     window.electronAPI.settings.getAll().then((s) => {
@@ -46,7 +48,7 @@ export default function App() {
         {PAGES.map((p) => (
           <div
             key={p.key}
-            className={`nav-item ${page === p.key ? 'active' : ''}`}
+            className={`nav-item nav-item-${p.key} ${page === p.key ? 'active' : ''}`}
             onClick={() => setPage(p.key)}
             title={p.label}
           >
@@ -62,6 +64,15 @@ export default function App() {
         {page === 'previsioni' && <Previsioni refreshToken={refreshToken} />}
         {page === 'settings' && <Settings refreshToken={refreshToken} theme={theme} onToggleTheme={toggleTheme} />}
       </div>
+
+      {page === 'dashboard' && (
+        <>
+          <button className="fab-add-transaction" onClick={() => setShowQuickAdd(true)} title="Aggiungi movimento">
+            <i className="fa-solid fa-circle-plus"></i>
+          </button>
+          <TransactionFormModal open={showQuickAdd} transaction={null} onClose={() => setShowQuickAdd(false)} />
+        </>
+      )}
     </div>
   )
 }
