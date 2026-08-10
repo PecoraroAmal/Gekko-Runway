@@ -217,8 +217,8 @@ export default function TransactionFormModal({ open, transaction, onClose, onSav
                     <label>Saveback (€)</label>
                     <input type="number" step="0.01" value={form.saveback} onChange={(e) => setForm({ ...form, saveback: e.target.value })} />
                     {errors.saveback && <div className="field-error">{errors.saveback}</div>}
-                    <button type="button" className="btn" style={{ marginTop: 4, width: 'fit-content' }} onClick={applyCalculatedSaveback}>
-                      <i className="fa-solid fa-calculator"></i>Usa calcolato ({selectedFormAccount.saveback_percent}%)
+                    <button type="button" className="btn" title={`Usa calcolato (${selectedFormAccount.saveback_percent}%)`} style={{ marginTop: 4, width: 'fit-content' }} onClick={applyCalculatedSaveback}>
+                      <i className="fa-solid fa-calculator"></i>
                     </button>
                   </div>
                 )}
@@ -239,8 +239,8 @@ export default function TransactionFormModal({ open, transaction, onClose, onSav
           </details>
 
           <div className="btn-row" style={{ marginTop: 12 }}>
-            <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Aggiungi movimento'}</button>
-            <button type="button" className="btn" onClick={onClose}>Annulla</button>
+            <button type="submit" className="btn btn-primary" title={editingId ? 'Salva modifiche' : 'Aggiungi movimento'}><i className="fa-solid fa-plus"></i></button>
+            <button type="button" className="btn" title="Annulla" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
           </div>
         </form>
       </div>

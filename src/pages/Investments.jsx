@@ -207,7 +207,7 @@ export default function Investments({ refreshToken }) {
       </div>
 
       <div className="btn-row" style={{ marginBottom: 20 }}>
-        <button className="btn btn-primary" onClick={openCreateForm}><i className="fa-solid fa-plus"></i>Aggiungi investimento</button>
+        <button className="btn btn-primary" title="Aggiungi investimento" onClick={openCreateForm}><i className="fa-solid fa-plus"></i></button>
       </div>
 
       {showForm && (
@@ -277,8 +277,8 @@ export default function Investments({ refreshToken }) {
                 </div>
               </div>
               <div className="btn-row">
-                <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Aggiungi investimento'}</button>
-                <button type="button" className="btn" onClick={closeForm}>Annulla</button>
+                <button type="submit" className="btn btn-primary" title={editingId ? 'Salva modifiche' : 'Aggiungi investimento'}><i className="fa-solid fa-plus"></i></button>
+                <button type="button" className="btn" title="Annulla" onClick={closeForm}><i className="fa-solid fa-xmark"></i></button>
               </div>
             </form>
           </div>
@@ -399,10 +399,10 @@ export default function Investments({ refreshToken }) {
             </div>
             {liquidateError && <div className="field-error">{liquidateError}</div>}
             <div className="btn-row" style={{ marginTop: 12 }}>
-              <button type="submit" className="btn btn-primary" disabled={!sameAccount}>
-                <i className="fa-solid fa-money-bill-transfer"></i>Liquida
+              <button type="submit" className="btn btn-primary" title="Liquida" disabled={!sameAccount}>
+                <i className="fa-solid fa-money-bill-transfer"></i>
               </button>
-              <button type="button" className="btn" onClick={clearSelection}>Annulla selezione</button>
+              <button type="button" className="btn" title="Annulla selezione" onClick={clearSelection}><i className="fa-solid fa-xmark"></i></button>
             </div>
           </form>
         </div>

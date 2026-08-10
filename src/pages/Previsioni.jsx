@@ -157,7 +157,7 @@ export default function Previsioni({ refreshToken }) {
       </div>
 
       <div className="btn-row" style={{ marginBottom: 20 }}>
-        <button className="btn btn-primary" onClick={openCreateForm}><i className="fa-solid fa-plus"></i>Aggiungi spesa ciclica</button>
+        <button className="btn btn-primary" title="Aggiungi spesa ciclica" onClick={openCreateForm}><i className="fa-solid fa-plus"></i></button>
       </div>
 
       {showForm && (
@@ -233,8 +233,8 @@ export default function Previsioni({ refreshToken }) {
               </div>
 
               <div className="btn-row">
-                <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Aggiungi spesa ciclica'}</button>
-                <button type="button" className="btn" onClick={closeForm}>Annulla</button>
+                <button type="submit" className="btn btn-primary" title={editingId ? 'Salva modifiche' : 'Aggiungi spesa ciclica'}><i className="fa-solid fa-plus"></i></button>
+                <button type="button" className="btn" title="Annulla" onClick={closeForm}><i className="fa-solid fa-xmark"></i></button>
               </div>
             </form>
           </div>

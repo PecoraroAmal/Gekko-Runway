@@ -315,10 +315,6 @@ th {
   flex-wrap: wrap;
 }
 
-.btn i {
-  margin-right: 6px;
-}
-
 .icon-btn {
   border: none;
   background: none;
@@ -695,9 +691,12 @@ input:focus, select:focus, textarea:focus {
   }
 
   .nav-item-accounts,
-  .nav-item-transactions,
   .nav-item-investments,
   .nav-item-previsioni {
+    display: none;
+  }
+
+  .mobile-hide {
     display: none;
   }
 

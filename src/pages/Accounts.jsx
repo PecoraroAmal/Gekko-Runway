@@ -124,7 +124,7 @@ export default function Accounts({ refreshToken }) {
       <h1 className="page-title">Conti</h1>
 
       <div className="btn-row" style={{ marginBottom: 20 }}>
-        <button className="btn btn-primary" onClick={openCreateForm}><i className="fa-solid fa-plus"></i>Aggiungi conto</button>
+        <button className="btn btn-primary" title="Aggiungi conto" onClick={openCreateForm}><i className="fa-solid fa-plus"></i></button>
       </div>
 
       {showForm && (
@@ -192,8 +192,8 @@ export default function Accounts({ refreshToken }) {
               </div>
 
               <div className="btn-row">
-                <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i>{editingId ? 'Salva modifiche' : 'Crea conto'}</button>
-                <button type="button" className="btn" onClick={closeForm}>Annulla</button>
+                <button type="submit" className="btn btn-primary" title={editingId ? 'Salva modifiche' : 'Crea conto'}><i className="fa-solid fa-plus"></i></button>
+                <button type="button" className="btn" title="Annulla" onClick={closeForm}><i className="fa-solid fa-xmark"></i></button>
               </div>
             </form>
           </div>

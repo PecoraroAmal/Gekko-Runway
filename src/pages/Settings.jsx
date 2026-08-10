@@ -162,9 +162,8 @@ export default function Settings({ refreshToken, theme, onToggleTheme }) {
       <div className="card">
         <h2 className="card-title">Aspetto</h2>
         <div className="btn-row">
-          <button className="btn" onClick={onToggleTheme}>
+          <button className="btn" title={theme === 'light' ? 'Passa a modalità scura' : 'Passa a modalità chiara'} onClick={onToggleTheme}>
             <i className={theme === 'light' ? 'fa-regular fa-moon' : 'fa-regular fa-sun'}></i>
-            {theme === 'light' ? 'Passa a modalità scura' : 'Passa a modalità chiara'}
           </button>
         </div>
       </div>
@@ -176,7 +175,7 @@ export default function Settings({ refreshToken, theme, onToggleTheme }) {
           {tagsEntrata.map((t) => (
             <span key={t.id} className="tag-pill">
               {t.name}
-              <button onClick={() => removeTag(t.id)}><i className="fa-regular fa-trash-can"></i></button>
+              <button title="Rimuovi tag" onClick={() => removeTag(t.id)}><i className="fa-regular fa-trash-can"></i></button>
             </span>
           ))}
         </div>
@@ -187,7 +186,7 @@ export default function Settings({ refreshToken, theme, onToggleTheme }) {
           {tagsUscita.map((t) => (
             <span key={t.id} className="tag-pill">
               {t.name}
-              <button onClick={() => removeTag(t.id)}><i className="fa-regular fa-trash-can"></i></button>
+              <button title="Rimuovi tag" onClick={() => removeTag(t.id)}><i className="fa-regular fa-trash-can"></i></button>
             </span>
           ))}
         </div>
@@ -209,7 +208,7 @@ export default function Settings({ refreshToken, theme, onToggleTheme }) {
         </div>
         {tagError && <div className="field-error">{tagError}</div>}
         <div className="btn-row">
-          <button className="btn btn-primary" onClick={addTag}><i className="fa-solid fa-plus"></i>Aggiungi tag</button>
+          <button className="btn btn-primary" title="Aggiungi tag" onClick={addTag}><i className="fa-solid fa-plus"></i></button>
         </div>
       </div>
 
@@ -259,7 +258,7 @@ export default function Settings({ refreshToken, theme, onToggleTheme }) {
         </div>
         {rateError && <div className="field-error">{rateError}</div>}
         <div className="btn-row">
-          <button className="btn btn-primary" onClick={addRateType}><i className="fa-solid fa-plus"></i>Aggiungi tipologia</button>
+          <button className="btn btn-primary" title="Aggiungi tipologia" onClick={addRateType}><i className="fa-solid fa-plus"></i></button>
         </div>
       </div>
 
@@ -281,8 +280,8 @@ export default function Settings({ refreshToken, theme, onToggleTheme }) {
           </div>
         </div>
         <div className="btn-row">
-          <button className="btn btn-primary" onClick={saveForecastDates}>
-            <i className="fa-regular fa-floppy-disk"></i>Salva
+          <button className="btn btn-primary" title="Salva" onClick={saveForecastDates}>
+            <i className="fa-regular fa-floppy-disk"></i>
           </button>
         </div>
         {forecastMessage && <div style={{ marginTop: 8, fontSize: 13, color: 'var(--fg-muted)' }}>{forecastMessage}</div>}
@@ -296,11 +295,11 @@ export default function Settings({ refreshToken, theme, onToggleTheme }) {
           sostituisce completamente il database attuale.
         </p>
         <div className="btn-row">
-          <button className="btn" disabled={backupBusy} onClick={exportDatabase}>
-            <i className="fa-solid fa-download"></i>Esporta database
+          <button className="btn" title="Esporta database" disabled={backupBusy} onClick={exportDatabase}>
+            <i className="fa-solid fa-download"></i>
           </button>
-          <button className="btn" disabled={backupBusy} onClick={importDatabase}>
-            <i className="fa-solid fa-upload"></i>Importa database
+          <button className="btn" title="Importa database" disabled={backupBusy} onClick={importDatabase}>
+            <i className="fa-solid fa-upload"></i>
           </button>
         </div>
         {backupMessage && <div style={{ marginTop: 8, fontSize: 13, color: 'var(--fg-muted)' }}>{backupMessage}</div>}
@@ -319,8 +318,8 @@ export default function Settings({ refreshToken, theme, onToggleTheme }) {
           </div>
         </div>
         <div className="btn-row">
-          <button className="btn btn-danger" disabled={resetConfirmText !== 'RESET'} onClick={resetDatabase}>
-            <i className="fa-solid fa-triangle-exclamation"></i>Resetta database
+          <button className="btn btn-danger" title="Resetta database" disabled={resetConfirmText !== 'RESET'} onClick={resetDatabase}>
+            <i className="fa-solid fa-triangle-exclamation"></i>
           </button>
         </div>
         {resetMessage && <div style={{ marginTop: 8, fontSize: 13, color: 'var(--fg-muted)' }}>{resetMessage}</div>}

@@ -66,7 +66,7 @@ export default function Transactions({ refreshToken }) {
       <h1 className="page-title">Movimenti</h1>
 
       <div className="btn-row" style={{ marginBottom: 20 }}>
-        <button className="btn btn-primary" onClick={openCreateForm}><i className="fa-solid fa-plus"></i>Aggiungi movimento</button>
+        <button className="btn btn-primary" title="Aggiungi movimento" onClick={openCreateForm}><i className="fa-solid fa-plus"></i></button>
       </div>
 
       <TransactionFormModal
@@ -114,8 +114,8 @@ export default function Transactions({ refreshToken }) {
             <label>Al</label>
             <input type="date" value={filters.dateTo} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
           </div>
-          <button className="btn" onClick={() => setFilters({ type: '', accountId: '', tag: '', dateFrom: '', dateTo: '' })}>
-            <i className="fa-solid fa-rotate-left"></i>Reset
+          <button className="btn" title="Reset filtri" onClick={() => setFilters({ type: '', accountId: '', tag: '', dateFrom: '', dateTo: '' })}>
+            <i className="fa-solid fa-rotate-left"></i>
           </button>
         </div>
       </div>
@@ -129,15 +129,15 @@ export default function Transactions({ refreshToken }) {
             <thead>
               <tr>
                 <th>Data</th>
-                <th>Tipo</th>
+                <th className="mobile-hide">Tipo</th>
                 <th>Importo</th>
-                <th>Conto</th>
-                <th>Tag</th>
-                <th>Nota</th>
-                <th>Roundup</th>
-                <th>Saveback</th>
-                <th>Previsioni</th>
-                <th>Origine</th>
+                <th className="mobile-hide">Conto</th>
+                <th className="mobile-hide">Tag</th>
+                <th className="mobile-hide">Nota</th>
+                <th className="mobile-hide">Roundup</th>
+                <th className="mobile-hide">Saveback</th>
+                <th className="mobile-hide">Previsioni</th>
+                <th className="mobile-hide">Origine</th>
                 <th></th>
               </tr>
             </thead>
@@ -145,19 +145,19 @@ export default function Transactions({ refreshToken }) {
               {transactions.map((tx) => (
                 <tr key={tx.id}>
                   <td>{formatDate(tx.date)}</td>
-                  <td>{tx.type === 'entrata' ? 'Entrata' : tx.type === 'uscita' ? 'Uscita' : 'Trasferimento'}</td>
+                  <td className="mobile-hide">{tx.type === 'entrata' ? 'Entrata' : tx.type === 'uscita' ? 'Uscita' : 'Trasferimento'}</td>
                   <td>{formatMoney(tx.amount)}</td>
-                  <td>
+                  <td className="mobile-hide">
                     {tx.type === 'trasferimento'
                       ? `${accountName(tx.account_id)} → ${accountName(tx.to_account_id)}`
                       : accountName(tx.account_id)}
                   </td>
-                  <td>{tx.tag || '—'}</td>
-                  <td>{tx.note || '—'}</td>
-                  <td>{tx.roundup ? formatMoney(tx.roundup) : '—'}</td>
-                  <td>{tx.saveback ? formatMoney(tx.saveback) : '—'}</td>
-                  <td>{tx.type === 'uscita' ? (tx.include_in_forecast ? 'Sì' : 'No') : '—'}</td>
-                  <td><span className={`badge badge-${tx.source}`}>{tx.source}</span></td>
+                  <td className="mobile-hide">{tx.tag || '—'}</td>
+                  <td className="mobile-hide">{tx.note || '—'}</td>
+                  <td className="mobile-hide">{tx.roundup ? formatMoney(tx.roundup) : '—'}</td>
+                  <td className="mobile-hide">{tx.saveback ? formatMoney(tx.saveback) : '—'}</td>
+                  <td className="mobile-hide">{tx.type === 'uscita' ? (tx.include_in_forecast ? 'Sì' : 'No') : '—'}</td>
+                  <td className="mobile-hide"><span className={`badge badge-${tx.source}`}>{tx.source}</span></td>
                   <td>
                     <div className="btn-row">
                       <button className="icon-btn" title="Modifica" onClick={() => startEdit(tx)}>
